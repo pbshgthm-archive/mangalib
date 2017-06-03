@@ -1,0 +1,274 @@
+<!DOCTYPE html>
+<html>
+<head>
+	<title>MangaLib</title>
+	<script src="https://ajax.googleapis.com/ajax/libs/jquery/3.2.1/jquery.min.js"></script>
+	<script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/js/bootstrap.min.js"></script>
+	<link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css">
+	<link rel="stylesheet" type="text/css" href="static/main.css">
+	<script src="static/parallax.js"></script>
+	<script src="https://use.fontawesome.com/aabf8153df.js"></script>
+	<script type="text/javascript" src="data.json"></script>
+	<script type="text/javascript" src="list.json"></script>
+</head>
+</head>
+<body>
+
+<div id="loading" style="background-image: url('assets/load.gif');"></div>
+
+<div id="loaded">
+<div id="nav" class="container">
+<div class="col-md-2">
+	<div id="tagname">MangaLib</span></div>
+</div>
+<div class="col-md-5">
+	<div id="manga-name"><span id="manga-title">Flower Power</span></div>
+</div>
+
+<div class="col-md-3">
+<div id="chapter-num"><li onclick="update_chap(chapter.number-1);" class="fa ch-nav fa-angle-double-left"></li>
+						&nbsp;&nbsp;<span id="curr-chap">Chapter 1</span>
+						<div class="dropdown">
+ 		 					<button class="dropbtn dropdown-toggle" data-toggle="dropdown"><li class="fa fa-caret-down"></li></button>
+  							<div id="chapdrop" class="dropdown-menu dropdown-menu-right scrollable-menu" >
+  							</div>
+						</div>&nbsp;
+					  <li onclick="update_chap(chapter.number+1);" class="fa ch-nav fa-angle-double-right"></li>
+					  
+					  
+
+</div>
+</div>
+<div class="col-md-1">
+	<div id="chap-page"><span id="curr-pg">6</span>
+			<div class="dropdown">
+ 		 					<button class="dropbtn dropdown-toggle" data-toggle="dropdown"><li class="fa fa-caret-down"></li></button>
+  							<div id="pagedrop" class="dropdown-menu dropdown-menu-right scrollable-menu" >
+    						</div>
+			</div>
+	</div>
+</div>
+
+
+</div>
+
+
+<div class="container parallax-window" id="base" data-parallax="scroll" data-image-src="assets/back.jpg">
+
+
+<div id="next" class="fa fa-chevron-right left carousel-control" href="#myCarousel" data-slide="next" style="opacity: 1;"></div>
+<div id="prev" class="fa fa-chevron-left right carousel-control" href="#myCarousel" data-slide="prev" style="opacity: 1;"></div>
+
+<div id="next-chap" class="fa fa-angle-double-right " ></div>
+<div id="prev-chap" class="fa fa-angle-double-left " ></div>
+
+
+<div id="holder">
+<div id="frame">
+
+<div id="myCarousel" class="carousel slide" data-ride="carousel" data-interval="false">
+	<div class="carousel-inner" id="imgframe">    
+	</div>
+
+</div>
+</div>
+
+
+</div>	
+<div class="footer">made with &nbsp;<span class="fa fa-heart" style="color: red; text-shadow: 0 0 20px red" ></span>&nbsp;&nbsp;by</div>
+<div class="footer"><i>poobesh gowtham</i></div>
+
+<div id="footer-fin"><span class="fa fa-circle" style="font-size: 10px" ></span><a>&nbsp;&nbsp;About MangaLib&nbsp;&nbsp;</a><span class="fa fa-circle" style="font-size: 10px" ></span></div>
+
+
+</div>
+
+
+
+</div>
+</body>
+
+<script type="text/javascript">
+
+
+
+$("#loaded").hide();
+document.title = master_data[localStorage["mangalib-manga"]].title;
+
+
+
+ $(window).on('load', function () {
+  $("#loading").delay(2000).fadeOut('3000',function(){
+  	$("#loaded").show(); 
+  	$('.parallax-window').parallax({imageSrc: 'assets/back.jpg'});		
+  });
+  
+ });
+
+
+
+
+
+	
+		var images;
+		//var chapter={"link":"4e71a653c09225616d0deb56","number":"1"};
+		var img_pre="https://cdn.mangaeden.com/mangasimg/"
+		var i,j;
+		var state="notready";
+
+
+
+
+	function chapter_load(chapter){
+
+
+		var curr_page;
+
+		$("#imgframe").fadeOut();
+
+		$.get( "http://www.mangaeden.com/api/chapter/"+chapter.link, function( data ) {
+  	
+  		images=data['images'];
+  	
+  		i =images.length-1;
+  		j=i-1;
+  		state="ready";
+  	
+		$("#curr-chap").text("Chapter "+chapter.number);
+		$('#pagedrop').empty();
+
+  		for(var pg=1;pg<=images.length;pg++)
+  		$('#pagedrop').append('<a onclick="update_page('+pg+')" style="text-align: center;">Page '+pg+'</a>');
+    	
+  		$("#imgframe").empty();
+
+		$("#imgframe").append('<div class="item active"><img src="'+img_pre+images[i][1]+'" style="width:100%;" onerror='+'this.src="assets/error.gif";'+'></div>');
+ 		$("#imgframe").fadeIn();
+ 		for(i=images.length-2;i>-1;i--)
+  		$([images[i][1]]).preload();
+
+ 		endhides();
+  		});
+
+		$("#myCarousel").bind('slid.bs.carousel', endhides);
+	}
+
+	var manga;
+	var chapter;
+	var chap_list;
+
+
+  	manga_load(localStorage["mangalib-manga"]);
+
+
+	function manga_load(id){
+
+		manga=master_data[id];
+		chap_list = manga['chapter']
+
+		
+		for(var ch=1;ch<=chap_list.length;ch++)
+  		$('#chapdrop').append('<a onclick="update_chap('+ch+')" style="text-align: center;">Chapter '+ch+'</a>');
+  		$("#manga-title").text(manga.title);
+		update_chap(1);
+
+	}
+
+	  
+	function update_chap(num){
+		
+		chapter={"link":chap_list[chap_list.length-num],"number":num};
+		chapter_load(chapter);
+	}
+	
+
+		
+
+	function update_page(num){
+		$(".active").removeClass('active');
+   		$(".item").eq(num-1).addClass("active");
+   		endhides();
+   		
+
+	}
+   
+   	$( "#prev-chap"  ).click(function() {
+ 		 update_chap(chapter.number-1);
+	});
+
+   	$( "#next-chap" ).click(function() {
+ 		 update_chap(chapter.number+1);
+	});
+
+
+    function endhides()                        
+	{
+  		var $this = $('#myCarousel');
+  			if($('.carousel-inner .item:first').hasClass('active')) {
+  				$("#prev").hide();
+  				$("#next").show();
+  				$("#next-chap").hide();
+
+  				if(chapter.number!=1)
+  					$("#prev-chap").show();
+  				else
+  					$("#prev-chap").hide();
+
+
+      		}else if($('.carousel-inner .item:last').hasClass('active')) {
+				$("#next").hide();
+  				$("#prev").show();
+  				$("#prev-chap").hide();
+
+  				if(chapter.number!=chap_list.length-1)
+  					$("#next-chap").show();
+  				else
+  					$("#next-chap").hide();
+
+   			} else {
+   				$("#next").show();
+  				$("#prev").show();
+  				$("#next-chap").hide();
+  				$("#prev-chap").hide();
+   			}
+
+   		var page = $(".item").index($(".active"));
+   		$("#curr-pg").text(page+1);
+
+	}
+
+
+	jQuery(document).bind('keyup', function(e) {
+
+      if(e.which==37){
+        
+        if($('.carousel-inner .item:first').hasClass('active')) {	
+  				if(chapter.number!=1)
+  					update_chap(chapter.number-1);
+      	}else 
+      			jQuery('.carousel-control.right').trigger('click');		
+
+      	}   
+
+      else if(e.which==39){
+       
+      	if($('.carousel-inner .item:last').hasClass('active')) {	
+  				if(chapter.number!=chap_list.length-1)
+  					update_chap(chapter.number+1);
+      	}else 
+      			jQuery('.carousel-control.left').trigger('click');
+
+       }
+
+  });
+
+
+	$.fn.preload = function() {
+    this.each(function(){
+        $("#imgframe").append('<div class="item"><img src="'+img_pre+images[i][1]+'" style="width:100%;" onerror="this.src="assets/error.gif";"></div>');
+    });
+	}
+
+</script>
+
+</html>
